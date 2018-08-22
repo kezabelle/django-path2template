@@ -44,11 +44,12 @@ class Path2TemplateView(TemplateView):
         variations = (newpath[0:l] for l in range(1, newpath_length))
         return variations
 
-    def get_template_variants(self, suffix):
+    def get_template_variants(self, filename, suffix):
         # type: (str) -> Tuple[str, ...]
         variants = tuple(self.generate_variants())
+        end = "{}.{}".format(filename, suffix)
         formatted_variants = (
-            "{}.{}".format("/".join(variant), suffix) for variant in reversed(variants)
+            "{}/{}".format("/".join(variant), end) for variant in reversed(variants)
         )
         if self.base_path:
             formatted_variants = (
@@ -65,15 +66,15 @@ class Path2TemplateView(TemplateView):
         )
 
     def get_template_names(self):
-        return self.get_template_variants(suffix="html")
+        return self.get_template_variants(filename="index", suffix="html")
 
     def get_context_data(self, **kwargs):
         context = super(Path2TemplateView, self).get_context_data(**kwargs)
         files = tuple(
             chain(
                 *zip(
-                    self.get_template_variants(suffix="json"),
-                    self.get_template_variants(suffix="toml"),
+                    self.get_template_variants(filename="data", suffix="json"),
+                    self.get_template_variants(filename="data", suffix="toml"),
                 )
             )
         )
@@ -85,3 +86,6 @@ class Path2TemplateView(TemplateView):
             filename, extra = self.load_context(selected_file)
         context.update(data=extra, context_files=files, context_file=filename)
         return context
+
+
+path_to_template = Path2TemplateView.as_view()
